@@ -5,8 +5,7 @@
 This is a knowledge resource. It documents the *behaviour* of the retail vanilla client: how it
 renders terrain and sky, how it lights a scene, how it decodes the wire protocol, how movement and
 collision resolve, how it lays out text — the logic that defines how the game looks and feels. Every
-claim is traced to a specific function in the client binary, by address, so you can open your own
-legally-obtained copy in a disassembler and check it.
+claim is traced to a specific function in the client binary, by address.
 
 It exists because nobody else writes this down. The public WoW ecosystem is split between **server
 emulators** that reimplement game *logic* (vmangos, CMaNGOS, TrinityCore) and **file-format parsers**
@@ -15,8 +14,7 @@ resource answers: **given the bytes, what does the client itself compute?**
 
 ## What this is / is not
 
-- **It is** a per-subsystem written account of the 1.12.1 client's internal mechanisms — formulas,
-  data layouts, constants, and the binary addresses they come from.
+- **It is** a per-subsystem written account of the 1.12.1 client's internal mechanisms.
 - **It is not** a game, a client, a server, or an asset parser. It ships no Blizzard code or assets.
 - **It is for** people implementing their own client or tooling, emulator developers who need
   client-accurate behaviour, and anyone studying how the vanilla client works.
@@ -101,19 +99,12 @@ on the model's word.
 
 ## Legal
 
-World of Warcraft, Warcraft, and Blizzard are trademarks of Blizzard Entertainment, Inc. This project
-is not affiliated with, endorsed by, or sponsored by Blizzard. It is an independent
-study/interoperability work. No Blizzard code, assets, or binaries are included or redistributed; the
-binary addresses cited refer to a copy you must obtain legally yourself. See [NOTICE](NOTICE).
+World of Warcraft, Warcraft, and Blizzard are trademarks of Blizzard Entertainment, Inc.; this is an
+independent work, not affiliated with or endorsed by Blizzard. Full trademark, provenance, and
+no-redistribution details are in [NOTICE](NOTICE).
 
 ## License
 
 The documentation in this repository is licensed under
 [Creative Commons Attribution 4.0 International (CC BY 4.0)](LICENSE) — use it, quote it, build on it;
 just credit the source. Any code snippets are additionally available under the MIT license.
-
-## Related projects
-
-- [wowdev.wiki](https://wowdev.wiki/) — the community reference for WoW file formats
-- [warcraft-rs](https://github.com/wowemulation-dev/warcraft-rs) — Rust parsers for WoW formats
-- [vmangos](https://github.com/vmangos/core) — a 1.12.x server emulator (server-side semantics)
