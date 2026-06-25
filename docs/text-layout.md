@@ -102,10 +102,10 @@ Pool-allocated by `0x5cd830`, built by `0x5cd6d0` (`Setup`/`SetText`), construct
 | `+0x60` | dirty page bitmask |
 | `+0x68`/`+0x6c` | selection start/end (init −1) |
 | `+0x70`/`+0x74`/`+0x78` | pixel-snapped screen anchor (x, y, z) |
-| `+0x80`/`+0x84`/`+0x88` | vertex-record growable array |
-| `+0x90`/`+0x94`/`+0x98` | hyperlink-info growable array |
+| `+0x7c`..`+0x88` | hyperlink-span growable array (`GXUFONTHYPERLINKINFO`, `0x20`-byte records — one per laid-out link region; ptr at `+0x84`) |
+| `+0x8c`..`+0x98` | gradient-colour growable array (`GRADIENTINFO`, 8-byte records; ptr at `+0x94`) |
 | `+0x9c` | rendered-glyph count (also the "already built" flag) |
-| `+0xa0..+0xbc` | 8 atlas-page vertex lists |
+| `+0xa0..+0xbc` | 8 atlas-page vertex/colour bundles (`TEXTLINETEXTURE`), one per atlas page — each holds that page's quad-vertex array plus a packed-colour array |
 | `+0xc0` | frame-age counter |
 
 The constructor seeds float defaults (no arithmetic): `+0x3c`/`+0x40` = `1.0`, colour `+0x2c` = `0xff000000`
@@ -136,7 +136,7 @@ The two metric floats `+0x4c` (step base) and `+0x50` (width) are distinct. The 
 ### `CGxStringBatch` — a batched run set (size `0x34`)
 
 A batch (`0x5c1d60` create, `0x5c1f00` clear, `0x5c1f70` destroy) holds an embedded
-`TSHashTable<CGxFont* → run>` so that many strings sharing a font draw together. Its element-list manager
+`TSHashTable<CGxFont* → run>` (each run a `BATCHEDRENDERFONTDESC`, a `0x28`-byte record) so that many strings sharing a font draw together. Its element-list manager
 vtable (`0x80a884`) sits at `+0x0c`; the run hashtable is `+0x24` (count) / `+0x28` (buckets) / `+0x30`
 (mask). The container bodies are pure intrusive-list/hashtable plumbing.
 
@@ -381,7 +381,8 @@ font[0x188]  = (float)face[0x58].u16[0xc] / (float)face.u16[0x44]    ; advance-a
 ## Building the glyph quads
 
 `glyph_quad_build` (`0x5ccbe0`) is the core geometry. For each glyph in the (already line-broken) run it
-appends a 4-vertex quad to the glyph's atlas-page vertex list and a colour quad to the page colour list. Each
+appends a 4-vertex quad to the glyph's atlas-page vertex list and a colour quad to the page colour list — both
+held in that page's `TEXTLINETEXTURE` bundle (pool-allocated on first use, recycled from a free pool). Each
 vertex is `0x14` bytes: `{x@+0, y@+4, z@+8, u@+0xc, v@+0x10}`.
 
 Per-call setup:
@@ -434,7 +435,7 @@ that step (clamped at 0).
 ## The glyph atlas
 
 Glyphs are rasterized once and packed into a 256×256 ARGB4444 texture. The atlas is partitioned into bucket
-rows by cell height:
+rows (`TEXTURECACHEROW`, 16-byte records) by cell height:
 
 ```
 rows           [0x5cf360] = 256 / cellsize             ; cellsize = font[0x178]
@@ -479,7 +480,7 @@ ascender `[[face+0x54]+0x68]`.
 ### The font face
 
 `FontFaceGetOrCreate` (`0x5d0060`) is the typeface factory behind `CGxFont+0x70`. It caches faces by name in a
-`TSHashTable` (mask global `0xc4baa0`); on a miss it opens the font file, builds the FreeType face from memory,
-and allocates an `HFACE` (size `0x2c`, vtable `0x80a91c`) holding the file handle, FreeType face, and a
-duplicated name. FreeType itself (`0x7cdb40` load, `0x7cdde0`/`0x7ce8d0` face-create, `0x7cec20` render,
+`TSHashTable` (keyed name → `FACEDATA`, mask global `0xc4baa0`); on a miss it opens the font file, builds the
+FreeType face from memory, and allocates the face record (`FACEDATA`, size `0x2c`, vtable `0x80a91c`) holding
+the file handle, FreeType face, and a duplicated name. FreeType itself (`0x7cdb40` load, `0x7cdde0`/`0x7ce8d0` face-create, `0x7cec20` render,
 `0x7ce2f0` done-face) is the statically-linked rasterization engine — the boundary of the font's own math.
