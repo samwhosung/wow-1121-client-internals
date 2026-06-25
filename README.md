@@ -93,9 +93,10 @@ what the binary provably computes, over a declared range of inputs, with any non
 (hardware-approximate instructions, externally-fed state) called out explicitly.
 
 The harness, the proofs, and the working notes live in a separate private workshop; this repository
-is the distilled, human-readable result. An AI assistant was used throughout to help transcribe and
-cross-check against the binary; every claim was gated by the objective differential test, not accepted
-on the model's word.
+is the distilled, human-readable result. The proof artifacts themselves — the bit-exact reference
+implementations and the differential test harness that gates them — may be released separately at a
+later date. An AI assistant was used throughout to help transcribe and cross-check against the binary;
+every claim was gated by the objective differential test, not accepted on the model's word.
 
 ## Legal
 
