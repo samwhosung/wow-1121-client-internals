@@ -23,7 +23,7 @@ The casting state is not a heap singleton; it lives in several disjoint module s
 | **SPELLMGR** | `0xceca60` | the singleton: cooldown/history container + scalar cast state |
 | **SPELLMOD_PCT** | `0xcecb30` | `i32[64][29]` pct modifiers (set by SMSG `0x267`) |
 
-`COOLDOWN` records are heap nodes living in two intrusive lists owned by SPELLMGR.
+`SPELLHISTORY` records are heap nodes living in two intrusive lists owned by SPELLMGR.
 
 ### SPELLCAST `0xceac48` — the pending cast request
 
@@ -71,35 +71,41 @@ the modifier tables. All scalars are zeroed by `Spell_C::SystemInitialize 0x6e71
 | `+0x60` | `0xcecac0` | **flag_word** — targeting/cast-active mask (u16) |
 | `+0x74` | `0xcecad4` | targeting reticle orientation angle (f32) |
 | `+0x78` | `0xcecad8` | autorepeat_aux |
-| `+0x8c` | `0xcecaec` | self **COOLDOWNLIST** (also the cooldown event queue head) |
+| `+0x8c` | `0xcecaec` | self **SpellHistory list** (also the cooldown event queue head) |
 | `+0xc0` | `0xcecb20` | saved_target_guid (u64) |
 
 The nested-cast save/restore swaps `{inflight_spell_id, inflight_target_guid}` ↔ `{saved_spell_id,
 saved_target_guid}` (routine `0x6e4ad0`). The reticle field `+0x74` was once mislabelled "pushback"; it is
 the spell-pending cursor orientation (cached from the target's facing, advanced by `0x6e69e0`).
 
-### COOLDOWN record (heap, 48 B; `SMemAlloc(0x30)`)
+### SPELLHISTORY record (heap, 48 B; `SMemAlloc(0x30)`)
 
-Inserted/refreshed by `AddCooldown 0x6e12c0`.
+The per-cast record is `SPELLHISTORY` — the engine's own name, recovered from the `.?AUSPELLHISTORY@@`
+type tag the compiler embeds in the binary. The "cooldown" the player sees is modelled internally as a
+**spell history**: each cast appends a record, queries walk the list for the remaining time, and a garbage
+collector reaps records whose timers have all elapsed. Appended by the history-add routine at `0x6e12c0`.
 
-| off | width | field |
-|---|---|---|
-| `+0x00` | ptr | link_next (intrusive) |
-| `+0x04` | ptr | link_prev |
-| `+0x08` | i32 | id (spellId; itemId for an item cooldown) |
-| `+0x0c` | i32 | id2 (0 for a spell; item-rec field for an item cooldown) |
-| `+0x10` | u32 | start_ms (`OsGetAsyncTimeMs`) |
-| `+0x14` | u32 | duration_ms (`SpellRec+0x4c` via modifier, else 30000 for items) |
-| `+0x18` | i32 | category_id (`SpellRec+0x8`) |
-| `+0x1c` | u32 | category_start_ms |
-| `+0x20` | u32 | category_duration_ms (`SpellRec+0x50`) |
-| `+0x24` | u8 | flags (`SpellRec+0x18` bit25) |
-| `+0x28` | i32 | gcd_category (`SpellRec+0x274`) |
-| `+0x2c` | u32 | gcd_duration_ms (`SpellRec+0x278`, the GCD) |
+| off | width | field | populated from |
+|---|---|---|---|
+| `+0x00` | ptr | `prevLink` — intrusive list link | |
+| `+0x04` | ptr | `NextValue` — intrusive list link | |
+| `+0x08` | i32 | `spellID` | |
+| `+0x0c` | i32 | `itemID` (set for an item-triggered cooldown) | |
+| `+0x10` | u32 | `recoveryStart` | `OsGetAsyncTimeMs` |
+| `+0x14` | u32 | `recoveryTime` | `SpellRec+0x4c` via modifier; `30000` for items |
+| `+0x18` | i32 | `category` | `SpellRec+0x8` |
+| `+0x1c` | u32 | `categoryRecoveryStart` | |
+| `+0x20` | u32 | `categoryRecoveryTime` | `SpellRec+0x50` |
+| `+0x24` | u8 | `onHold` (a single boolean, not a flags field) | `SpellRec+0x18` bit25 |
+| `+0x28` | i32 | `startRecoveryCategory` | `SpellRec+0x274` |
+| `+0x2c` | u32 | `startRecoveryTime` (the global cooldown) | `SpellRec+0x278` |
 
-### COOLDOWNLIST (`TSExplicitList`, 24 B; two instances)
+Item cooldowns additionally use a separate `ITEMCOOLDOWNHASHNODE`.
 
-Self list at `0xcecaec`, pet list at `0xcecb04`, stride `0x18`. The constructor `0x6e1050` writes the two
+### The SpellHistory lists (`TSExplicitList`, 24 B; two instances)
+
+`SPELLHISTORY` records live in two intrusive lists — self at `0xcecaec`, pet at `0xcecb04`, stride `0x18`.
+The constructor `0x6e1050` writes the two
 self-referential link sentinels per list: the `{+0x04,+0x08}` pair is the used-list sentinel (tail tagged
 `|1`), the `{+0x10,+0x14}` pair the free-list sentinel. The list index is selected by
 `(caster_guid == pet_guid [0xb714a0]) ? 1 : 0`.
@@ -305,7 +311,7 @@ Notable bodies:
 The write path is `AddCooldown 0x6e12c0` (the single primitive that inserts/refreshes a node). It early-
 outs when duration, category-duration, gcd-duration, and flags are all zero (nothing to track); otherwise
 it reuses a matching node or allocates a fresh 48-byte node (`SMemAlloc(0x30)`), and fills the fields
-listed in the COOLDOWN table above. `StartCooldown 0x6e2c60` computes the recovery / category-recovery
+listed in the SPELLHISTORY table above. `StartCooldown 0x6e2c60` computes the recovery / category-recovery
 durations (applying spell-mod `0xb`) before inserting; `StartGlobalCooldown 0x6e2de0` inserts a GCD-only
 node (spell-mod `0x15`).
 
