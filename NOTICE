@@ -1,0 +1,39 @@
+WoW 1.12.1 Client Internals — NOTICE
+====================================
+
+Trademarks and affiliation
+--------------------------
+World of Warcraft, Warcraft, and Blizzard are trademarks or registered trademarks of Blizzard
+Entertainment, Inc. in the U.S. and/or other countries. This project is an independent work and is
+not affiliated with, authorized, endorsed, or sponsored by Blizzard Entertainment. Trademark names are
+used only nominatively, to identify the subject of study.
+
+No Blizzard code, assets, or binaries
+-------------------------------------
+This repository contains no Blizzard source code, game assets, or executable bytes, and redistributes
+none. The virtual addresses cited throughout refer to a copy of the 1.12.1 (build 5875) client that
+you must obtain legally yourself. Nothing here circumvents any technical protection measure.
+
+Provenance
+----------
+The mechanisms documented here were derived by reverse-engineering a single, legally-obtained copy of
+the en-US 1.12.1 client through disassembly and differential testing against that binary. No leaked,
+third-party-decompiled, or otherwise unauthorized source was used. Claims are presented as VERIFIED
+against the binary, or labelled where they are inferred.
+
+AI assistance
+-------------
+An AI assistant was used to help transcribe and cross-check the client's behaviour against the binary.
+Every claim was gated by an objective differential test (transcribed code executed against the
+original under emulation and compared output-for-output); the arbiter of correctness is the binary,
+not the model. AI output was not accepted on trust.
+
+License scope
+-------------
+The CC BY 4.0 license (see LICENSE) applies to the original documentation authored in this repository.
+It grants no rights in any Blizzard intellectual property.
+
+Purpose
+-------
+This work is published for study, interoperability, and preservation. It does not enable online play
+and is not a substitute for the game.
