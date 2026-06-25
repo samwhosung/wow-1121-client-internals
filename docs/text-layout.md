@@ -65,9 +65,9 @@ Created by `0x5c1ae0` (`GxuFontCreate`), constructed by `0x5ca920`, configured b
 | `+0x14` | glyph-hash container vtable (`0x80a8cc`) |
 | `+0x30`/`+0x38` | glyph-`CharCodeDesc` hash bucket array / mask |
 | `+0x3c` | kerning-hash container vtable (`0x80a8bc`) |
-| `+0x58`/`+0x60` | kerning-pair hash bucket array / mask |
+| `+0x58`/`+0x60` | kerning-pair hash bucket array / mask (`KERNNODE` records) |
 | `+0x64`/`+0x68`/`+0x6c` | glyph-LRU list (link offset `0x20`, head, front) |
-| `+0x70` | font face / typeface handle |
+| `+0x70` | font face / typeface handle (`FACEDATA`) |
 | `+0x74` | font name/path, `char[0x104]` (MAX_PATH) |
 | `+0x178` | rasterization pixel/em size (the atlas cell size) |
 | `+0x17c` | rasterizer load parameter |

@@ -456,7 +456,8 @@ the targeting-cursor errors.
 ## The spell-visual / effect pipeline
 
 The visual sub-system is three object families plus an auto-repeat engine, all rooted in fixed `.data`
-globals.
+globals. (Individual scripted effects are their own named classes in the binary — e.g. `BlizzardObject`,
+`LightningObject`, `Shard`.)
 
 ### The `SpellVisual` scene/particle object
 

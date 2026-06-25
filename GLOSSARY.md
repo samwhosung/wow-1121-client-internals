@@ -28,6 +28,10 @@ is standard reverse-engineering and WoW terminology.
 - **CGObject / CGUnit / CGPlayer / …** — the client's object class hierarchy (the `C`-prefixed C++
   classes recovered from the binary).
 - **UpdateFields** — the server-replicated object state, a flat indexed field array per object.
+- **`NTempest`** — the namespace the binary uses for its shared math/geometry classes (`C3Vector`,
+  `C44Matrix`, `C4Plane`, `CFacet`, `CRect`, …). Chapters often write the class names bare.
+- **`CImVector`** — the engine's packed 32-bit colour type, stored **BGRA** (the byte order matters when
+  reproducing vertex colours and texture decode).
 
 ## Reading the addresses against your own binary
 
