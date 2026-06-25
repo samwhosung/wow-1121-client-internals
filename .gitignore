@@ -1,0 +1,7 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+/.idea/
+
+# Local scratch
+/scratch/
