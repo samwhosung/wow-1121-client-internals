@@ -336,7 +336,12 @@ function.
 
 `0x476eb0` (skin grid) and `0x476f30` (equip grid) walk the `+0x188`/`+0x228` grids calling `0x47b150`
 per cell. `0x47b150` ensures the underlying model record is loaded (`0x47ac10`, else `0x44b430` +
-`0x44ae70`) before its geosets/textures are read, returning 0 (retry) while a load is in flight.
+`0x44ae70`) before its geosets/textures are read, returning 0 (retry) while a load is in flight. That model
+record is a **`CACHEENTRY`** — the model manager's refcounted, name-keyed cache record: header `0xc8` bytes
+plus a variable tail (`SMemAlloc(size + 0xc8)`), keyed by the model-name string at `+0x38`, with the model id
+at `+0x34` (the value `0x47ac10` loads) and a refcount at `+0xbc`. The manager keeps them in a `TSExplicitList`
+hash table (get-or-create `0x47ae30`, bucket `= key & [0xb4274c]`, rehash `0x47b7d0`); `0x47b000` adds a
+reference and `0x47b010` releases one, destroying the record (`0x47ad70`) when the count reaches zero.
 `0x476e20` builds an equipment texture filename with the gender-letter patch: `[0x838ab4 + sex*4]`
 written at `[0xb42510 + strlen − 5]`.
 
@@ -407,7 +412,7 @@ loader `0x540300` (`mov ecx, <desc>; call <loader>`). The 20-byte descriptor is
 ## What this subsystem owns vs delegates
 
 It owns the **composition** decisions: geoset/region selection, the CharSections layer/region
-arithmetic, the attach-slot and race-index logic, and the manager pool / hash containers. It delegates
+arithmetic, the attach-slot and race-index logic, and the manager pool / hash containers (the `CACHEENTRY` records). It delegates
 texture upload/blit and scene nodes to the [graphics device](graphics-device.md) (`0x449d90`,
 `0x58a980`, the `0x71xxxx` cluster); model-name/path and object allocation to the CGModel object API
 (`0x64a7f0` / `0x6462e0` / `0x646430`); and CharSections rows to [DBC](dbc.md). All of its own logic is

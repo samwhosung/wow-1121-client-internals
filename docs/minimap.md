@@ -217,8 +217,11 @@ The blip slots are five records at `0xcea760`, **stride `0x74`**:
 | `+0x28` | 0x40-byte data |
 | `+0x48` | source kind (party/raid index, or `−2`) |
 
-The list handed to consumers uses a separate **stride `0x4c`** output record: 0x40 bytes of data, then
-`angle` at `+0x40`, `isSelf` at `+0x44`, and `kind` at `+0x48`.
+The list handed to consumers uses a separate **`POIDIRECTIONDATA`** record, **stride `0x4c`**: 0x40 bytes
+of data (copied from the POI/blip source record's `+0x28`), then the screen `angle` at `+0x40`, `isSelf` at
+`+0x44`, and `kind` at `+0x48`. These records live in a global growable array (base `0xbc819c`, data pointer
+`0xbc81a4`) that `build_blip_list` (`0x6daa20`) resizes to the nearest-N count (element `0x4c`, via `0x6db750`)
+and the CWorldFrame minimap render path consumes; the array is released at shutdown (`0x4ea94e`).
 
 **`place_party_raid_blips` (`0x6dad10`)** — for each party/raid member and the corpse:
 
@@ -287,11 +290,12 @@ The accessors and mutators the Lua/UI layer and the render path call into:
 - **Zoom / flags**: `get_zoom_index` (`0x6da980`), `get_zoom_levels` (`0x6da9a0`, returns 6), `set_zoom`
   (`0x6da8e0` — clamps to 5, marks dirty, persists via `CVar::Set`), `get_update_flags` (`0x6daa00`),
   `get_ping_ptr` (`0x6dad00`).
-- **Blips / POI**: `build_blip_list` (`0x6daa20` — memcpy of the nearest-N records, stride `0x4c`),
+- **Blips / POI**: `build_blip_list` (`0x6daa20` — memcpy of the nearest-N `POIDIRECTIONDATA` records, stride `0x4c`),
   `refresh_for_unit` (`0x6dabc0`), `set_blip` (`0x6dac10` — fills a slot at stride `0x74`, sets ping expiry
   `GetTime + 0x1e0`), `set_blip_wrap` (`0x6dacb0`), `set_corpse_blip` (`0x6dacd0`).
 
 The MD5 / POI Storm containers (the `TSHashTable` / `TSGrowableArray` / `TSExplicitList` machinery over
-`MINIMAPMD5NAME` and `AreaPOIRec*`) are pure pointer/integer surgery with no floating-point arithmetic —
+`MINIMAPMD5NAME`, `AreaPOIRec*`, and `POIDIRECTIONDATA`) are pure pointer/integer surgery with no
+floating-point arithmetic —
 node dtor `0x6dafd0`, list insert `0x6db040`, array grow `0x6db310`, rehash `0x6db820`, and the rest of the
 `0x6db0xx`–`0x6dbbxx` band.
