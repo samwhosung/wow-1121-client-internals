@@ -3,7 +3,7 @@
 The "glue" is everything the client shows before the world loads: the login screen, the realm
 list, and character select/create. It is driven by a single manager, `CGlueMgr`, which runs a
 small screen-flow state machine, hosts the GlueXML UI (a FrameScript/Lua binding layer), manages
-the realm list, and drives the 3D character preview. The manager itself owns only a small set of
+the realm list, and drives the 3D character preview (the `CharacterSelectionDisplay` object). The manager itself owns only a small set of
 look-defining math functions — viewport aspect, realm-population statistics, and a handful of customization/preview
 scalars — and delegates the network wire to [Net](net.md), the preview render to [Models](models.md)
 and the [Graphics device](graphics-device.md), and the widget framework plus the Lua VM to [UI](ui.md).

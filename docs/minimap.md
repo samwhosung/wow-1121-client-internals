@@ -141,7 +141,8 @@ builds the path, hash-looks-up the md5 name, MPQ-loads the texture, and fills th
 
 ## Tile texture streaming + md5translate
 
-The streaming helpers build paths and resolve them through the translation table:
+The streaming helpers build paths and resolve them through the translation table (its entries are
+`MINIMAPMD5NAME` records):
 
 - `build_world_name` (`0x6da330`) — forms the `World\<continent>` prefix.
 - `build_tile_path` (`0x6da7b0`) — formats `%s\map%d_%d.blp` and resolves it via the md5translate hash table.

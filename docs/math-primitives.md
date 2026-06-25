@@ -13,10 +13,13 @@ A note that applies to every section below: where a routine calls an 80-bit x87 
 On Apple Silicon there is no x87, so the host `libm` is the realizable behavior; the x87↔libm gap is
 sub-ULP and unobservable. Everything else here is plain f32/f64 arithmetic with canonical bytes.
 
-## Linear algebra — `C44Matrix` / `C33Matrix` / `C3Vector` / `C4Vector` (cmath)
+## Linear algebra — the `NTempest` math library (`C44Matrix` / `C33Matrix` / `C3Vector` / `C4Vector`)
 
-The shared matrix/vector library. Pure 32-bit-float math with its own `fsqrt`/`fsincos`/`fpatan`
-(no CRT `sqrt`). It is the leaf that the renderer's `proj` multiply (`0x59fe20` delegates to the 4×4
+The shared matrix/vector library. The binary places these classes in the **`NTempest`** namespace — the
+engine's shared math/geometry types: the vectors and matrices here, plus the packed BGRA colour
+`NTempest::CImVector`, the frustum plane `C4Plane`, the collision facet `CFacet`, and the
+`CRect`/`CiRect` rectangles that other chapters reference. Pure 32-bit-float math with its own
+`fsqrt`/`fsincos`/`fpatan` (no CRT `sqrt`). It is the leaf that the renderer's `proj` multiply (`0x59fe20` delegates to the 4×4
 multiply `0x7bc6a0`) and later terrain/models/collision/lighting/animation all bottom out at.
 
 In `.text` the library is emitted as a contiguous run **interleaved with foreign code** that shares

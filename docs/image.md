@@ -124,7 +124,8 @@ Supported types are 1, 2, 9, 10. Component primitives:
 
 ## Shared mip-geometry `[0x5a49b0, 0x5a4bb0]`
 
-Format-agnostic; called by both BLP decode and the texture service. A mip chain is one contiguous
+Format-agnostic; called by both BLP decode and the texture service (which caches mip pixels in a
+`CMipBitsCache` and dedupes loaded textures through a `CTextureHash`). A mip chain is one contiguous
 block: a leading array of `count` 32-bit absolute pointers, then the concatenated mip pixel data:
 
 ```
