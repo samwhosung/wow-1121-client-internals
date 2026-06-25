@@ -47,11 +47,13 @@ A few conventions you'll see (full list in [GLOSSARY.md](GLOSSARY.md)):
 - [Graphics device](docs/graphics-device.md) — the render device and state submission
 - [Camera](docs/camera.md) — the view transform: perspective / lookAt / frustum
 - [Rendering math](docs/rendering-math.md) — projection, frustum, ray/picking math
+- [Full-frame effects](docs/full-frame-effects.md) — glow/bloom, the death-fade desaturation, the post-process passes
 
 ### Movement & simulation
 - [Collision & movement](docs/collision.md) — player vs world geometry, the movement controller
 - [Object model](docs/object-model.md) — the CGObject hierarchy, UpdateFields, the object manager
 - [Spells](docs/spells.md) — client cast lifecycle, cooldowns, targeting, spell visuals
+- [Minigame](docs/minigame.md) — the client model of a server board game (TicTacToe)
 
 ### Networking
 - [Network protocol](docs/net.md) — auth + world wire protocol, the session
