@@ -74,9 +74,54 @@ power-of-two / cap clamp.
 
 ## What runs on the GPU
 
-The actual blur/glow/death convolution is delegated to the graphics device as **ARB fragment
-programs** loaded from `.bls` files: `FFXBox4`, `FFXGauss4`, `FFXGlow`, `FFXGlowWave`, and the
-`FFXDeath*` set. Worth noting for implementers: the 1.12.1 client is **not** purely fixed-function —
-these full-frame effects are real programmable-shader passes (a box/gaussian blur of a downsampled
-target, composited with the glow-wave animation; a desaturation pass for death). The CPU math above
-feeds those programs their per-frame constants and geometry.
+The blur/glow/death convolution is delegated to the graphics device as **ARB fragment programs**
+loaded from `.bls` files: `FFXBox4`, `FFXGauss4`, `FFXGlow`, `FFXGlowWave`, and the `FFXDeath*` set.
+Worth noting for implementers: the 1.12.1 client is **not** purely fixed-function — these full-frame
+effects are real programmable-shader passes. The programs ship as data in the MPQ, so the per-pixel
+arithmetic below (kernel weights, the combine expression) is read directly out of `FFXBox4.bls` /
+`FFXGauss4.bls` / `FFXGlow.bls`; the **tap offsets** are CPU-fed texcoords, i.e. part of the geometry
+this document's subsystem computes, not the shader text.
+
+### The glow shader chain
+
+For the standard full-screen glow the GPU runs four passes — one downsample, a separable blur, and
+the combine:
+
+```
+blur = Gauss4( Gauss4( Box4(scene → ¼), horizontal ), vertical )
+out  = lerp(screen, blur, z) + w · blur²
+```
+
+**Downsample — one Box4, full → ¼.** Note that although the RT-dimension chain (`0x6cdb40`, above)
+computes *both* ½ and ¼ sizes, the glow blur uses a **single** Box4 pass straight from full
+resolution to ¼ — the ½ target is allocated but the glow never samples it. Box4 is 4 bilinear taps at
+source-texel offsets `{−1.5, +0.5}²` (a 4×4 footprint), averaged `× 0.25` (tap table `0xce89cc`).
+
+**Blur — separable Gauss4 at ¼ res**, horizontal then vertical. Four taps per axis (`FFXGauss4.bls`
+weights; tap offsets from the CPU array at `0x6cad10`):
+
+| offset (source texels) | weight |
+|---|---|
+| ±0.5 | 0.375 (⅜) |
+| ±2.5 | 0.125 (⅛) |
+
+i.e. the shipped `⅛ ⅜ ⅜ ⅛` kernel. Base UVs are texel-centre aligned with zero half-texel residual,
+so the offsets transcribe as exact source-texel counts.
+
+**Combine — the square-law.** `FFXGlow.bls` is exactly `out = lerp(screen, blur, z) + w · blur²`,
+alpha 1:
+
+- `w` is the per-zone glow gain — the `LightParams` glow weight, **authored data** (≈0.647 in
+  Elwynn), *not* a tuned constant.
+- `z` is the haze/mix term, **0** for the ordinary scene glow (a per-object attribute can raise it).
+
+The **`blur²` square-law is the whole character of the vanilla glow**, and the detail most "bloom"
+reimplementations miss: mid-tones barely bloom (a 0.5 blur contributes 0.25) while highlights bloom
+fully. A linear additive composite — everything blooming in proportion to its brightness — cannot
+express that curve.
+
+**Colour space.** The pass runs in **gamma bytes**, not linear: the RTs are 8-bit gamma-encoded, the
+blur convolves gamma values, and the combine is a **saturating byte add** (`out` clamps at 1.0 — the
+framebuffer is LDR past this pass). Reproducing it in a linear-HDR renderer means encoding both terms
+back to gamma, doing the byte math, clamping, and decoding once; run the square-law in linear space
+and the weighting comes out wrong.
